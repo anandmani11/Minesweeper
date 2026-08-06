@@ -24,6 +24,8 @@ bool firstClick = false;
 
 bool gameWon = false;
 
+int flagsPlaced = 0;
+
 int mineAmount = 10;
 
 std::array<std::tuple<int, int>, 8> transforms{
@@ -109,9 +111,12 @@ Coords GetMouseCoords() {
 
 void DrawMouseHover() {
   Coords coords = GetMouseCoords();
-  DrawRectangle(std::get<0>(coords) * TILE_SIZE,
-                std::get<1>(coords) * TILE_SIZE, TILE_SIZE, TILE_SIZE,
-                Color{255, 255, 255, 100});
+  if (std::get<0>(coords) >= 0 && std::get<0>(coords) < SCREEN_WIDTH_TILE &&
+      std::get<1>(coords) >= 0 && std::get<1>(coords) < SCREEN_HEIGHT_TILE) {
+    DrawRectangle(std::get<0>(coords) * TILE_SIZE,
+                  std::get<1>(coords) * TILE_SIZE, TILE_SIZE, TILE_SIZE,
+                  Color{255, 255, 255, 100});
+  }
 }
 
 void PlaceMines(Board &board) {
@@ -162,6 +167,9 @@ void ExcavateAround(Board &board, int x, int y) {
     return;
 
   board[y][x].isCovered = false;
+  if (board[x][y].flagged) {
+    flagsPlaced--;
+  }
   board[y][x].flagged = false;
 
   if (board[y][x].value == 0) {
@@ -223,14 +231,32 @@ void MouseInput(Board &board) {
     }
     else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
       if (tile.isCovered) {
-        tile.flagged ? tile.flagged = false : tile.flagged = true;
+        if (tile.flagged) {
+          tile.flagged = false;
+          flagsPlaced--;
+        }
+        else {
+          tile.flagged = true;
+          flagsPlaced++;
+        }
       }
     }
   }
 }
 
+void DrawBottomBar() {
+  Color textColor = WHITE;
+  if (flagsPlaced > mineAmount) {
+    textColor = RED;
+  }
+  std::string text_str = std::to_string(flagsPlaced) + " / " + "10";
+  const char *text = text_str.c_str();
+  DrawRectangle(0, SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE, DARKGREEN);
+  DrawText(text, 20, SCREEN_HEIGHT + 20, 40, textColor);
+}
+
 int main() {
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Minesweeper");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT + TILE_SIZE, "Minesweeper");
   Texture2D flag = LoadTexture("resources/flag.png");
   SetTargetFPS(60);
   std::srand(std::time(0));
@@ -252,6 +278,7 @@ int main() {
     ClearBackground(RAYWHITE);
 
     DrawTiles(tiles, flag);
+    DrawBottomBar();
 
     if (!gameOver && !gameWon) {
       DrawMouseHover();
