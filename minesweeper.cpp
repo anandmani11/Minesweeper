@@ -167,7 +167,7 @@ void ExcavateAround(Board &board, int x, int y) {
     return;
 
   board[y][x].isCovered = false;
-  if (board[x][y].flagged) {
+  if (board[y][x].flagged) {
     flagsPlaced--;
   }
   board[y][x].flagged = false;
@@ -207,8 +207,6 @@ void MouseInput(Board &board) {
     if (!firstClick) {
       firstClick = true;
       tile.isCovered = false;
-      PlaceMines(board);
-      UpdateTiles(board);
       tile.isCovered = true;
     }
 
@@ -255,11 +253,7 @@ void DrawBottomBar() {
   DrawText(text, 20, SCREEN_HEIGHT + 20, 40, textColor);
 }
 
-int main() {
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT + TILE_SIZE, "Minesweeper");
-  Texture2D flag = LoadTexture("resources/flag.png");
-  SetTargetFPS(60);
-  std::srand(std::time(0));
+void ResetGame(Board &board) {
   for (int j = 0; j < SCREEN_HEIGHT_TILE; j++) {
     for (int i = 0; i < SCREEN_WIDTH_TILE; i++) {
       tiles[j][i].isCovered = true;
@@ -269,6 +263,25 @@ int main() {
       tiles[j][i].flagged = false;
     }
   }
+  gameOver = false;
+  gameWon = false;
+  PlaceMines(board);
+  UpdateTiles(board);
+}
+
+void GameOverMouse(Board &board) {
+  if (IsKeyPressed(KEY_R)) {
+    ResetGame(board);
+  }
+}
+
+int main() {
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT + TILE_SIZE, "Minesweeper");
+  Texture2D flag = LoadTexture("resources/flag.png");
+  SetTargetFPS(60);
+  std::srand(std::time(0));
+
+  ResetGame(tiles);
 
   while (WindowShouldClose() == false) {
     if (!gameOver && !gameWon) {
@@ -285,13 +298,21 @@ int main() {
     }
     else if (gameWon) {
       const char *text = "You Win";
+      const char *text2 = "Press 'R' To Play Again";
       DrawText(text, (SCREEN_WIDTH / 2) - (MeasureText(text, 80) / 2),
                SCREEN_HEIGHT / 2 - 40, 80, RED);
+      DrawText(text2, (SCREEN_WIDTH / 2) - (MeasureText(text2, 40) / 2),
+               SCREEN_HEIGHT / 2 + 40, 40, RED);
+      GameOverMouse(tiles);
     }
     else {
       const char *text = "Game Over";
+      const char *text2 = "Press 'R' To Retry";
       DrawText(text, (SCREEN_WIDTH / 2) - (MeasureText(text, 80) / 2),
                SCREEN_HEIGHT / 2 - 40, 80, RED);
+      DrawText(text2, (SCREEN_WIDTH / 2) - (MeasureText(text2, 40) / 2),
+               SCREEN_HEIGHT / 2 + 40, 40, RED);
+      GameOverMouse(tiles);
     }
 
     EndDrawing();
