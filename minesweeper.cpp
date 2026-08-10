@@ -265,6 +265,7 @@ void ResetGame(Board &board) {
   }
   gameOver = false;
   gameWon = false;
+  flagsPlaced = 0;
   PlaceMines(board);
   UpdateTiles(board);
 }
